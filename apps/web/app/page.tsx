@@ -257,7 +257,7 @@ export default function HomePage() {
               rel="noopener noreferrer"
               className="text-agri-400 hover:text-agri-300 hover:underline font-semibold transition-colors"
             >
-              Lalu Adittya Pratama Jelindra
+              Adhiet
             </a>
           </p>
         </footer>
