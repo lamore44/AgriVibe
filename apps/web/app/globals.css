@@ -52,6 +52,10 @@ body {
     background-size: 1.25em 1.25em;
   }
 
+  .form-select option {
+    @apply bg-slate-950 text-slate-100;
+  }
+
   .form-input {
     @apply w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3
            text-sm text-slate-100 backdrop-blur-md

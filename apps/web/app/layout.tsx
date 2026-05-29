@@ -15,9 +15,12 @@ const display = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "AgriVibe — Asisten Pertanian Cerdas Sembalun",
+  title: "AgriVibe | Asisten Pertanian Cerdas Sembalun",
   description:
     "Platform AI untuk membantu petani Sembalun menentukan tanaman terbaik dan cara perawatan yang tepat berdasarkan kondisi lahan dan cuaca.",
+  icons: {
+    icon: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({
