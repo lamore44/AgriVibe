@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #0b0f1a;
+  color: #e2e8f0;
+}
+
+@layer components {
+  .glass-panel {
+    @apply border border-white/20 bg-white/10 backdrop-blur-md shadow-glass;
+  }
+
+  .glass-card {
+    @apply glass-panel rounded-2xl;
+  }
+
+  .bento-border {
+    @apply border border-white/15;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 18px rgba(34, 197, 94, 0.45);
+  }
+
+  .text-glow-amber {
+    text-shadow: 0 0 18px rgba(217, 164, 50, 0.5);
+  }
+
+  /* Form controls */
+  .form-select {
+    @apply w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3
+           text-sm text-slate-100 backdrop-blur-md
+           transition-all duration-200
+           focus:border-agri-400/50 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-agri-400/25
+           hover:border-white/30;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25em 1.25em;
+  }
+
+  .form-input {
+    @apply w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3
+           text-sm text-slate-100 backdrop-blur-md
+           transition-all duration-200
+           focus:border-agri-400/50 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-agri-400/25
+           hover:border-white/30;
+  }
+
+  .form-label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-400;
+  }
+
+  .form-radio {
+    @apply cursor-pointer rounded-xl border border-white/20 bg-white/5 px-4 py-2.5
+           text-sm text-slate-300 backdrop-blur-md
+           transition-all duration-200
+           hover:border-white/30 hover:bg-white/10;
+  }
+
+  .form-radio-active {
+    @apply border-agri-400/50 bg-agri-500/15 text-agri-300 ring-1 ring-agri-400/25;
+  }
+
+  /* Button */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl
+           bg-gradient-to-r from-agri-600 to-agri-500
+           px-6 py-3 text-sm font-semibold text-white
+           shadow-lg shadow-agri-600/25
+           transition-all duration-300
+           hover:from-agri-500 hover:to-agri-400 hover:shadow-agri-500/30
+           active:scale-[0.98]
+           disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:from-agri-600 disabled:hover:to-agri-500;
+  }
+
+  /* Expandable card */
+  .expand-trigger[open] > summary {
+    @apply border-b border-white/10 pb-3;
+  }
+
+  .expand-trigger > summary {
+    @apply cursor-pointer list-none;
+  }
+
+  .expand-trigger > summary::-webkit-details-marker {
+    display: none;
+  }
+}
