@@ -175,9 +175,74 @@ async fn main() {
         .unwrap();
 }
 
+// ── Input Validation (OWASP A03: Injection) ──
+
+fn validate_land_input(
+    jenis_tanah: &str,
+    sumber_air: &str,
+    musim: &str,
+    budget: &str,
+    tanaman_sebelumnya: Option<&str>,
+) -> Result<(), String> {
+    let valid_soils = ["vulkanik", "lempung", "berpasir", "liat"];
+    if !valid_soils.contains(&jenis_tanah.to_lowercase().as_str()) {
+        return Err("Jenis tanah tidak valid. Harus vulkanik, lempung, berpasir, atau liat.".to_string());
+    }
+
+    let valid_water = ["irigasi", "tadah_hujan", "sungai", "sumur"];
+    if !valid_water.contains(&sumber_air.to_lowercase().as_str()) {
+        return Err("Sumber air tidak valid. Harus irigasi, tadah_hujan, sungai, atau sumur.".to_string());
+    }
+
+    let valid_seasons = ["hujan", "kemarau"];
+    if !valid_seasons.contains(&musim.to_lowercase().as_str()) {
+        return Err("Musim tidak valid. Harus hujan atau kemarau.".to_string());
+    }
+
+    let valid_budgets = ["rendah", "sedang", "tinggi"];
+    if !valid_budgets.contains(&budget.to_lowercase().as_str()) {
+        return Err("Budget tidak valid. Harus rendah, sedang, atau tinggi.".to_string());
+    }
+
+    if let Some(prev) = tanaman_sebelumnya {
+        if prev.len() > 50 {
+            return Err("Nama tanaman sebelumnya terlalu panjang (maksimal 50 karakter).".to_string());
+        }
+        if !prev.chars().all(|c| c.is_alphanumeric() || c.is_whitespace() || c == '/' || c == '-' || c == '_') {
+            return Err("Nama tanaman sebelumnya mengandung karakter berbahaya.".to_string());
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_chat_request(history: &[gemini::ChatMessage]) -> Result<(), String> {
+    if history.len() > 20 {
+        return Err("Riwayat obrolan terlalu panjang (maksimal 20 pesan).".to_string());
+    }
+    for msg in history {
+        if msg.content.len() > 500 {
+            return Err("Pesan terlalu panjang (maksimal 500 karakter).".to_string());
+        }
+    }
+    Ok(())
+}
+
 // ── Handlers ──
 
-async fn handle_analyze_land(Json(payload): Json<LandAnalysisRequest>) -> Json<LandAnalysisResponse> {
+async fn handle_analyze_land(
+    Json(payload): Json<LandAnalysisRequest>,
+) -> Result<Json<LandAnalysisResponse>, (StatusCode, String)> {
+    if let Err(err_msg) = validate_land_input(
+        &payload.jenis_tanah,
+        &payload.sumber_air,
+        &payload.musim,
+        &payload.budget,
+        payload.tanaman_sebelumnya.as_deref(),
+    ) {
+        return Err((StatusCode::BAD_REQUEST, err_msg));
+    }
+
     let fuzzy_input = fuzzy::FuzzyInput {
         jenis_tanah: payload.jenis_tanah.clone(),
         sumber_air: payload.sumber_air.clone(),
@@ -186,7 +251,7 @@ async fn handle_analyze_land(Json(payload): Json<LandAnalysisRequest>) -> Json<L
 
     let result = fuzzy::calculate_suitability(&fuzzy_input);
 
-    Json(LandAnalysisResponse {
+    Ok(Json(LandAnalysisResponse {
         suitability_score: result.suitability_score,
         suitability_label: result.label,
         jenis_tanah: payload.jenis_tanah,
@@ -199,10 +264,22 @@ async fn handle_analyze_land(Json(payload): Json<LandAnalysisRequest>) -> Json<L
         soil_membership: result.soil_membership,
         water_membership: result.water_membership,
         rules_fired: result.rules_fired,
-    })
+    }))
 }
 
-async fn handle_recommend_crops(Json(payload): Json<CropRecommendRequest>) -> Json<CropRecommendResponse> {
+async fn handle_recommend_crops(
+    Json(payload): Json<CropRecommendRequest>,
+) -> Result<Json<CropRecommendResponse>, (StatusCode, String)> {
+    if let Err(err_msg) = validate_land_input(
+        &payload.jenis_tanah,
+        &payload.sumber_air,
+        &payload.musim,
+        &payload.budget,
+        payload.tanaman_sebelumnya.as_deref(),
+    ) {
+        return Err((StatusCode::BAD_REQUEST, err_msg));
+    }
+
     // 1) Hitung skor kesesuaian lahan
     let fuzzy_input = fuzzy::FuzzyInput {
         jenis_tanah: payload.jenis_tanah.clone(),
@@ -231,7 +308,7 @@ async fn handle_recommend_crops(Json(payload): Json<CropRecommendRequest>) -> Js
     };
 
     match gemini::generate_crop_recommendation(&gemini_input).await {
-        Ok(output) => Json(CropRecommendResponse {
+        Ok(output) => Ok(Json(CropRecommendResponse {
             recommendations: output.recommendations,
             tips_umum: output.tips_umum,
             source: "gemini".to_string(),
@@ -243,11 +320,11 @@ async fn handle_recommend_crops(Json(payload): Json<CropRecommendRequest>) -> Js
             soil_membership: fuzzy_result.soil_membership.clone(),
             water_membership: fuzzy_result.water_membership.clone(),
             rules_fired: fuzzy_result.rules_fired.clone(),
-        }),
+        })),
         Err(err) => {
             eprintln!("Gemini error: {}", err);
             let fallback = gemini::fallback_recommendation(&gemini_input);
-            Json(CropRecommendResponse {
+            Ok(Json(CropRecommendResponse {
                 recommendations: fallback.recommendations,
                 tips_umum: fallback.tips_umum,
                 source: "fallback".to_string(),
@@ -259,12 +336,15 @@ async fn handle_recommend_crops(Json(payload): Json<CropRecommendRequest>) -> Js
                 soil_membership: fuzzy_result.soil_membership.clone(),
                 water_membership: fuzzy_result.water_membership.clone(),
                 rules_fired: fuzzy_result.rules_fired.clone(),
-            })
+            }))
         }
     }
 }
 
 async fn handle_chat(Json(payload): Json<ChatRequest>) -> Result<Json<ChatResponse>, (StatusCode, String)> {
+    if let Err(err_msg) = validate_chat_request(&payload.history) {
+        return Err((StatusCode::BAD_REQUEST, err_msg));
+    }
     match gemini::generate_chat_response(payload.history).await {
         Ok(reply) => Ok(Json(ChatResponse { reply })),
         Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err)),
