@@ -490,12 +490,17 @@ async fn fetch_weather() -> Option<WeatherResponse> {
     let mut forecast_days = Vec::new();
     if let Some(f_data) = forecast_resp {
         let mut forecast_map: HashMap<String, Vec<serde_json::Value>> = HashMap::new();
+        let today_str = chrono::Local::now().format("%Y-%m-%d").to_string();
+
         if let Some(list_arr) = f_data.get("list").and_then(|l| l.as_array()) {
             for item in list_arr {
                 if let Some(dt_txt) = item.get("dt_txt").and_then(|d| d.as_str()) {
                     if dt_txt.len() >= 10 {
                         let date_key = dt_txt[0..10].to_string();
-                        forecast_map.entry(date_key).or_insert_with(Vec::new).push(item.clone());
+                        // Hanya masukkan prakiraan jika bukan tanggal hari ini (prakiraan mulai besok)
+                        if date_key != today_str {
+                            forecast_map.entry(date_key).or_insert_with(Vec::new).push(item.clone());
+                        }
                     }
                 }
             }
