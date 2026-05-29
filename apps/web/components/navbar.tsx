@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Leaf, Info, Home } from "lucide-react";
+import { Leaf, Info, Home, Sprout } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -32,6 +32,18 @@ export default function Navbar() {
           >
             <Home className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Beranda</span>
+          </Link>
+          
+          <Link
+            href="/crops"
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all ${
+              pathname === "/crops"
+                ? "bg-agri-500/10 text-agri-400 border border-agri-500/20"
+                : "text-slate-400 hover:text-white border border-transparent hover:bg-white/5"
+            }`}
+          >
+            <Sprout className="h-3.5 w-3.5" />
+            <span>Direktori</span>
           </Link>
           
           <Link

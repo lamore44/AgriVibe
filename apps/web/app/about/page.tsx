@@ -118,49 +118,49 @@ export default function AboutPage() {
             {/* Kentang */}
             <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 text-center transition-all hover:bg-white/[0.03] hover:border-white/10">
               <div className="text-xs font-bold text-slate-200">Kentang</div>
-              <div className="text-lg font-black text-agri-400 mt-2">18.520 Ton</div>
+              <div className="text-lg font-black text-agri-400 mt-2">1.472 Ton</div>
               <div className="text-[10px] text-slate-500 mt-1">Produksi / Th</div>
               <div className="text-[10px] text-slate-400 border-t border-white/5 mt-2.5 pt-1.5 flex justify-between">
                 <span>Luas:</span>
-                <span className="font-semibold text-white">845 Ha</span>
+                <span className="font-semibold text-white">118 Ha</span>
               </div>
             </div>
 
             {/* Bawang Merah */}
             <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 text-center transition-all hover:bg-white/[0.03] hover:border-white/10">
               <div className="text-xs font-bold text-slate-200">Bawang Merah</div>
-              <div className="text-lg font-black text-sky-400 mt-2">7.180 Ton</div>
+              <div className="text-lg font-black text-sky-400 mt-2">2.979,9 Ton</div>
               <div className="text-[10px] text-slate-500 mt-1">Produksi / Th</div>
               <div className="text-[10px] text-slate-400 border-t border-white/5 mt-2.5 pt-1.5 flex justify-between">
                 <span>Luas:</span>
-                <span className="font-semibold text-white">638 Ha</span>
+                <span className="font-semibold text-white">390 Ha</span>
               </div>
             </div>
 
             {/* Bawang Putih */}
             <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 text-center transition-all hover:bg-white/[0.03] hover:border-white/10">
               <div className="text-xs font-bold text-slate-200">Bawang Putih</div>
-              <div className="text-lg font-black text-teal-400 mt-2">2.760 Ton</div>
+              <div className="text-lg font-black text-teal-400 mt-2">5.822,8 Ton</div>
               <div className="text-[10px] text-slate-500 mt-1">Produksi / Th</div>
               <div className="text-[10px] text-slate-400 border-t border-white/5 mt-2.5 pt-1.5 flex justify-between">
                 <span>Luas:</span>
-                <span className="font-semibold text-white">315 Ha</span>
+                <span className="font-semibold text-white">416 Ha</span>
               </div>
             </div>
 
-            {/* Kopi Arabika */}
+            {/* Stroberi Sembalun */}
             <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 text-center transition-all hover:bg-white/[0.03] hover:border-white/10">
-              <div className="text-xs font-bold text-slate-200">Kopi Arabika</div>
-              <div className="text-lg font-black text-amber-600 mt-2">45 Ton</div>
+              <div className="text-xs font-bold text-slate-200">Stroberi</div>
+              <div className="text-lg font-black text-rose-450 mt-2">325 Ton</div>
               <div className="text-[10px] text-slate-500 mt-1">Produksi / Th</div>
               <div className="text-[10px] text-slate-400 border-t border-white/5 mt-2.5 pt-1.5 flex justify-between">
                 <span>Luas:</span>
-                <span className="font-semibold text-white">125 Ha</span>
+                <span className="font-semibold text-white">39 Ha</span>
               </div>
             </div>
           </div>
           <p className="text-[9px] text-slate-500 text-right leading-none">
-            * Data produksi tahunan rata-rata berdasarkan publikasi Kecamatan Sembalun Dalam Angka 2025, BPS Kabupaten Lombok Timur.
+            * Data produksi dan luas panen tahun 2024 berdasarkan publikasi Kecamatan Sembalun Dalam Angka 2025, BPS Kabupaten Lombok Timur.
           </p>
         </div>
 

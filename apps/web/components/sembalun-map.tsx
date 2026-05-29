@@ -25,7 +25,7 @@ const REGIONS: Region[] = [
     jenisTanah: "vulkanik",
     sumberAir: "irigasi",
     altitude: "1.150 mdpl",
-    description: "Kawasan sentra stroberi, bawang merah, dan bawang putih. Berdasarkan data BPS (2025), memiliki ketinggian rata-rata 1.150 mdpl dengan jenis tanah vulkanik subur.",
+    description: "Kawasan sentra stroberi dan bawang. Berdasarkan BPS (2025), wilayah ini memiliki luas 52,29 km² (21,27% dari total kecamatan) dengan elevasi 1.150 mdpl dan tanah vulkanik subur.",
   },
   {
     id: "bumbung",
@@ -35,7 +35,7 @@ const REGIONS: Region[] = [
     jenisTanah: "vulkanik",
     sumberAir: "sumur",
     altitude: "1.250 mdpl",
-    description: "Desa dengan elevasi tertinggi (~1.250 mdpl). Menurut BPS (2025), merupakan sentra produksi kentang dan bawang putih dengan iklim paling dingin.",
+    description: "Kawasan dengan elevasi tertinggi (~1.250 mdpl). Merujuk data BPS (2025), wilayah ini memiliki luas terbesar yaitu 55,97 km² (22,76% dari kecamatan), dominan untuk kentang dan bawang putih.",
   },
   {
     id: "sajang",
@@ -45,7 +45,7 @@ const REGIONS: Region[] = [
     jenisTanah: "berpasir",
     sumberAir: "sungai",
     altitude: "800 mdpl",
-    description: "Ketinggian sedang (~800 mdpl). Merujuk laporan BPS (2025), memiliki tanah berpasir vulkanik yang sangat cocok untuk perkebunan Kopi Arabika dan sayuran semusim.",
+    description: "Wilayah lereng dengan luas 38,62 km² (15,71% dari kecamatan) dan ketinggian ~800 mdpl. Menurut BPS (2025), memiliki tanah berpasir vulkanik yang sangat ideal untuk Kopi Arabika.",
   },
   {
     id: "bilok_petung",
@@ -55,7 +55,7 @@ const REGIONS: Region[] = [
     jenisTanah: "liat",
     sumberAir: "tadah_hujan",
     altitude: "300 mdpl",
-    description: "Dataran rendah dekat pesisir (~300 mdpl). Sesuai data BPS (2025), didominasi tanah lempung liat tadah hujan, cocok untuk cabai, jagung, dan palawija.",
+    description: "Dataran rendah dekat pesisir (~300 mdpl) dengan luas wilayah 33,59 km² (13,66% dari kecamatan). Sesuai data BPS (2025), didominasi tanah liat cocok untuk cabai dan jagung.",
   },
 ];
 
