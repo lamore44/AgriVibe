@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
+import Navbar from "@/components/navbar";
 
 import "./globals.css";
 
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${sans.variable} ${display.variable}`}>
       <body className="min-h-screen bg-ink-900 text-slate-100 antialiased">
+        <Navbar />
         {children}
       </body>
     </html>

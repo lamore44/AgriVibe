@@ -83,9 +83,16 @@ export default function HomePage() {
       saveHistoryEntry(entry);
       setHistory(loadHistory());
 
-      // Scroll to results
+      // Scroll ke hasil hanya jika bagian atas hasil belum terlihat di viewport
       setTimeout(() => {
-        resultRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (resultRef.current) {
+          const rect = resultRef.current.getBoundingClientRect();
+          const navbarHeight = 80; // tinggi navbar + spacing aman
+          const isVisible = rect.top >= navbarHeight && rect.top < window.innerHeight;
+          if (!isVisible) {
+            resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
       }, 200);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan");
@@ -108,13 +115,9 @@ export default function HomePage() {
       <div className="absolute -bottom-40 right-0 h-[28rem] w-[28rem] rounded-full bg-earth-500/15 blur-[120px]" />
       <div className="absolute top-1/3 right-1/4 h-72 w-72 rounded-full bg-agri-400/10 blur-[120px]" />
 
-      <div className="relative z-10 mx-auto max-w-5xl px-4 py-8 sm:px-6 md:py-14 lg:py-18">
+      <div className="relative z-10 mx-auto max-w-5xl px-4 pt-8 pb-8 sm:px-6 md:pb-14 lg:pb-18">
         {/* ── Hero ── */}
         <header className="max-w-3xl space-y-4 text-slate-100">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-agri-300/90">
-            <span className="h-2 w-2 rounded-full bg-agri-400 shadow-[0_0_12px_rgba(34,197,94,0.6)]" />
-            AgriVibe Sembalun
-          </div>
           <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
             Asisten Pertanian Cerdas{" "}
             <span className="text-agri-400">Sembalun</span>
@@ -163,7 +166,7 @@ export default function HomePage() {
 
         {/* ── Results ── */}
         {result && (
-          <div ref={resultRef} className="mt-10 space-y-6 animate-fade-in-up">
+          <div ref={resultRef} className="mt-10 space-y-6 animate-fade-in-up scroll-mt-20">
             {/* Score gauge */}
             <SuitabilityGauge
               score={result.suitability_score}
@@ -242,12 +245,20 @@ export default function HomePage() {
         </section>
 
         {/* ── Footer ── */}
-        <footer className="mt-12 border-t border-white/10 pt-6 text-center text-xs text-slate-600">
+        <footer className="mt-12 border-t border-white/10 pt-6 text-center text-xs text-slate-500">
           <p>
-            AgriVibe — KKN Universitas Mataram di Sembalun, Lombok Timur
+            AgriVibe — Platform Asisten Pertanian Cerdas Sembalun, Lombok Timur
           </p>
-          <p className="mt-1">
-            Dibuat oleh Lalu Adittya Pratama Jelindra • Teknik Informatika
+          <p className="mt-1.5">
+            Dibuat oleh{" "}
+            <a
+              href="https://github.com/lamore44"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-agri-400 hover:text-agri-300 hover:underline font-semibold transition-colors"
+            >
+              Lalu Adittya Pratama Jelindra
+            </a>
           </p>
         </footer>
       </div>
