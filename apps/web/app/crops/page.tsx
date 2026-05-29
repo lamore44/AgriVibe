@@ -131,11 +131,13 @@ export default function CropsDirectoryPage() {
                     >
                       {/* Gambar Preview */}
                       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-slate-900">
-                        <img
-                          src={crop.image}
-                          alt={crop.name}
-                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                        />
+                        <div className="w-full h-full overflow-hidden" style={{ transform: "scale(1.16)" }}>
+                          <img
+                            src={crop.image}
+                            alt={crop.name}
+                            className="h-full w-full object-cover transition-transform group-hover:scale-110"
+                          />
+                        </div>
                       </div>
 
                       {/* Detail Singkat */}
@@ -176,7 +178,13 @@ export default function CropsDirectoryPage() {
                 {/* Header Detail */}
                 <div className="relative h-44 w-full overflow-hidden border-b border-white/10 bg-slate-950 flex items-end p-5">
                   {/* Backdrop Image */}
-                  <div className="absolute inset-0 bg-cover bg-center opacity-65" style={{ backgroundImage: `url(${selectedCrop.image})` }} />
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center opacity-80" 
+                    style={{ 
+                      backgroundImage: `url(${selectedCrop.image})`,
+                      transform: "scale(1.16)"
+                    }} 
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
                   
                   {/* Judul Detail */}
