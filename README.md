@@ -42,3 +42,13 @@ Tambahkan API keys di `apps/api/.env`:
 GEMINI_API_KEY=your_key
 OPENWEATHER_API_KEY=your_key
 ```
+
+## Pembuat & Hak Cipta
+
+Aplikasi ini dirancang, dikembangkan, dan dikelola secara mandiri oleh:
+* **Adhietya Pratama** - *Inisiator & Lead Developer*
+* Dikembangkan untuk program pengabdian masyarakat (KKN) di Kecamatan Sembalun, Lombok Timur.
+
+## Lisensi
+
+Proyek ini dilisensikan di bawah **MIT License** - lihat berkas [LICENSE](LICENSE) untuk detail hak cipta hukum lebih lanjut.
