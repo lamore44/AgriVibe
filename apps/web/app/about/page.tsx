@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Cpu, Info, Leaf, Users, Github } from "lucide-react";
+import { ArrowLeft, BookOpen, Cpu, Info, Leaf, Users, Github, BarChart3 } from "lucide-react";
 
 export default function AboutPage() {
   return (
@@ -100,6 +100,68 @@ export default function AboutPage() {
               <p className="text-slate-400">Konsultasi interaktif kapan saja untuk menanyakan solusi hama penyakit tanaman di Sembalun.</p>
             </div>
           </div>
+        </div>
+
+        {/* Statistik Sektor Pertanian BPS */}
+        <div className="glass-card p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-white/10 pb-3">
+            <h3 className="font-display font-semibold text-white text-base flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-agri-400" />
+              Statistik Pertanian Sembalun
+            </h3>
+            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+              Sumber: BPS (Kecamatan Sembalun Dalam Angka 2025)
+            </span>
+          </div>
+
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+            {/* Kentang */}
+            <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 text-center transition-all hover:bg-white/[0.03] hover:border-white/10">
+              <div className="text-xs font-bold text-slate-200">Kentang</div>
+              <div className="text-lg font-black text-agri-400 mt-2">18.520 Ton</div>
+              <div className="text-[10px] text-slate-500 mt-1">Produksi / Th</div>
+              <div className="text-[10px] text-slate-400 border-t border-white/5 mt-2.5 pt-1.5 flex justify-between">
+                <span>Luas:</span>
+                <span className="font-semibold text-white">845 Ha</span>
+              </div>
+            </div>
+
+            {/* Bawang Merah */}
+            <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 text-center transition-all hover:bg-white/[0.03] hover:border-white/10">
+              <div className="text-xs font-bold text-slate-200">Bawang Merah</div>
+              <div className="text-lg font-black text-sky-400 mt-2">7.180 Ton</div>
+              <div className="text-[10px] text-slate-500 mt-1">Produksi / Th</div>
+              <div className="text-[10px] text-slate-400 border-t border-white/5 mt-2.5 pt-1.5 flex justify-between">
+                <span>Luas:</span>
+                <span className="font-semibold text-white">638 Ha</span>
+              </div>
+            </div>
+
+            {/* Bawang Putih */}
+            <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 text-center transition-all hover:bg-white/[0.03] hover:border-white/10">
+              <div className="text-xs font-bold text-slate-200">Bawang Putih</div>
+              <div className="text-lg font-black text-teal-400 mt-2">2.760 Ton</div>
+              <div className="text-[10px] text-slate-500 mt-1">Produksi / Th</div>
+              <div className="text-[10px] text-slate-400 border-t border-white/5 mt-2.5 pt-1.5 flex justify-between">
+                <span>Luas:</span>
+                <span className="font-semibold text-white">315 Ha</span>
+              </div>
+            </div>
+
+            {/* Kopi Arabika */}
+            <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 text-center transition-all hover:bg-white/[0.03] hover:border-white/10">
+              <div className="text-xs font-bold text-slate-200">Kopi Arabika</div>
+              <div className="text-lg font-black text-amber-600 mt-2">45 Ton</div>
+              <div className="text-[10px] text-slate-500 mt-1">Produksi / Th</div>
+              <div className="text-[10px] text-slate-400 border-t border-white/5 mt-2.5 pt-1.5 flex justify-between">
+                <span>Luas:</span>
+                <span className="font-semibold text-white">125 Ha</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-[9px] text-slate-500 text-right leading-none">
+            * Data produksi tahunan rata-rata berdasarkan publikasi Kecamatan Sembalun Dalam Angka 2025, BPS Kabupaten Lombok Timur.
+          </p>
         </div>
 
         {/* Tim Pengembang */}

@@ -2,6 +2,9 @@
 
 import { Droplets, Leaf, MapPin, Sprout, Wallet } from "lucide-react";
 import { useState } from "react";
+import dynamic from "next/dynamic";
+
+const SembalunMap = dynamic(() => import("./sembalun-map"), { ssr: false });
 
 export type LandFormData = {
   jenis_tanah: string;
@@ -59,6 +62,7 @@ export default function LandForm({ onSubmit, isLoading }: Props) {
   const [musim, setMusim] = useState("kemarau");
   const [tanamanSebelumnya, setTanamanSebelumnya] = useState("");
   const [budget, setBudget] = useState("sedang");
+  const [selectedRegionName, setSelectedRegionName] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,146 +76,184 @@ export default function LandForm({ onSubmit, isLoading }: Props) {
     });
   };
 
+  const handleSelectRegion = (jenisTanahVal: string, sumberAirVal: string, regionName: string) => {
+    setJenisTanah(jenisTanahVal);
+    setSumberAir(sumberAirVal);
+    setSelectedRegionName(regionName);
+  };
+
   return (
-    <form onSubmit={handleSubmit} id="land-form" className="space-y-6">
-      {/* Baris 1: Jenis Tanah & Luas Lahan */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <div>
-          <label htmlFor="jenis-tanah" className="form-label">
-            <Leaf className="mr-1 inline h-3.5 w-3.5 text-agri-400" />
-            Jenis Tanah
-          </label>
-          <select
-            id="jenis-tanah"
-            className="form-select"
-            value={jenisTanah}
-            onChange={(e) => setJenisTanah(e.target.value)}
-          >
-            {SOIL_TYPES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="luas-lahan" className="form-label">
-            <MapPin className="mr-1 inline h-3.5 w-3.5 text-agri-400" />
-            Luas Lahan (are)
-          </label>
-          <input
-            id="luas-lahan"
-            type="number"
-            min={1}
-            max={1000}
-            step={1}
-            className="form-input"
-            value={luasLahan}
-            onChange={(e) => setLuasLahan(Number(e.target.value) || 1)}
-          />
-        </div>
-      </div>
-
-      {/* Baris 2: Sumber Air & Budget */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <div>
-          <label htmlFor="sumber-air" className="form-label">
-            <Droplets className="mr-1 inline h-3.5 w-3.5 text-sky-400" />
-            Sumber Air
-          </label>
-          <select
-            id="sumber-air"
-            className="form-select"
-            value={sumberAir}
-            onChange={(e) => setSumberAir(e.target.value)}
-          >
-            {WATER_SOURCES.map((w) => (
-              <option key={w.value} value={w.value}>
-                {w.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="budget" className="form-label">
-            <Wallet className="mr-1 inline h-3.5 w-3.5 text-amber-400" />
-            Budget
-          </label>
-          <select
-            id="budget"
-            className="form-select"
-            value={budget}
-            onChange={(e) => setBudget(e.target.value)}
-          >
-            {BUDGETS.map((b) => (
-              <option key={b.value} value={b.value}>
-                {b.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Baris 3: Musim */}
-      <div>
-        <span className="form-label">Musim Saat Ini</span>
-        <div className="mt-1 flex gap-3">
-          {(["hujan", "kemarau"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              id={`musim-${m}`}
-              className={`form-radio flex-1 text-center ${musim === m ? "form-radio-active" : ""}`}
-              onClick={() => setMusim(m)}
-            >
-              {m === "hujan" ? "🌧️ Hujan" : "☀️ Kemarau"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Baris 4: Tanaman sebelumnya */}
-      <div>
-        <label htmlFor="tanaman-sebelumnya" className="form-label">
-          <Sprout className="mr-1 inline h-3.5 w-3.5 text-agri-400" />
-          Tanaman Sebelumnya (opsional)
-        </label>
-        <select
-          id="tanaman-sebelumnya"
-          className="form-select"
-          value={tanamanSebelumnya}
-          onChange={(e) => setTanamanSebelumnya(e.target.value)}
-        >
-          {PREV_CROPS.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Submit */}
-      <button
-        type="submit"
-        id="submit-analysis"
-        className="btn-primary w-full"
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <>
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-            Menganalisis lahan...
-          </>
-        ) : (
-          <>
-            <Sparkles className="h-4 w-4" />
-            Analisis Lahan &amp; Dapatkan Rekomendasi
-          </>
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+      {/* Kolom Kiri: Form Isian */}
+      <form onSubmit={handleSubmit} id="land-form" className="space-y-5 lg:col-span-7">
+        
+        {/* Balon Notifikasi Auto-Fill */}
+        {selectedRegionName && (
+          <div className="rounded-xl border border-agri-500/20 bg-agri-500/10 px-4 py-2.5 text-xs text-agri-300 animate-fade-in-up">
+            🚀 Wilayah <strong>{selectedRegionName}</strong> dipilih! Jenis tanah diset ke <strong className="text-white capitalize">{jenisTanah}</strong> &amp; sumber air diset ke <strong className="text-white capitalize">{sumberAir.replace("_", " ")}</strong>.
+          </div>
         )}
-      </button>
-    </form>
+
+        {/* Baris 1: Jenis Tanah & Luas Lahan */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="jenis-tanah" className="form-label">
+              <Leaf className="mr-1 inline h-3.5 w-3.5 text-agri-400" />
+              Jenis Tanah
+            </label>
+            <select
+              id="jenis-tanah"
+              className="form-select"
+              value={jenisTanah}
+              onChange={(e) => {
+                setJenisTanah(e.target.value);
+                setSelectedRegionName(null); // Reset label wilayah jika diubah manual
+              }}
+            >
+              {SOIL_TYPES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="luas-lahan" className="form-label">
+              <MapPin className="mr-1 inline h-3.5 w-3.5 text-agri-400" />
+              Luas Lahan (are)
+            </label>
+            <input
+              id="luas-lahan"
+              type="number"
+              min={1}
+              max={1000}
+              step={1}
+              className="form-input"
+              value={luasLahan}
+              onChange={(e) => setLuasLahan(Number(e.target.value) || 1)}
+            />
+          </div>
+        </div>
+
+        {/* Baris 2: Sumber Air & Budget */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="sumber-air" className="form-label">
+              <Droplets className="mr-1 inline h-3.5 w-3.5 text-sky-400" />
+              Sumber Air
+            </label>
+            <select
+              id="sumber-air"
+              className="form-select"
+              value={sumberAir}
+              onChange={(e) => {
+                setSumberAir(e.target.value);
+                setSelectedRegionName(null); // Reset label wilayah jika diubah manual
+              }}
+            >
+              {WATER_SOURCES.map((w) => (
+                <option key={w.value} value={w.value}>
+                  {w.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="budget" className="form-label">
+              <Wallet className="mr-1 inline h-3.5 w-3.5 text-amber-400" />
+              Budget
+            </label>
+            <select
+              id="budget"
+              className="form-select"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+            >
+              {BUDGETS.map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Baris 3: Musim */}
+        <div>
+          <span className="form-label">Musim Saat Ini</span>
+          <div className="mt-1 flex gap-3">
+            {(["hujan", "kemarau"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                id={`musim-${m}`}
+                className={`form-radio flex-1 text-center ${musim === m ? "form-radio-active" : ""}`}
+                onClick={() => setMusim(m)}
+              >
+                {m === "hujan" ? "🌧️ Hujan" : "☀️ Kemarau"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Baris 4: Tanaman sebelumnya */}
+        <div>
+          <label htmlFor="tanaman-sebelumnya" className="form-label">
+            <Sprout className="mr-1 inline h-3.5 w-3.5 text-agri-400" />
+            Tanaman Sebelumnya (opsional)
+          </label>
+          <select
+            id="tanaman-sebelumnya"
+            className="form-select"
+            value={tanamanSebelumnya}
+            onChange={(e) => setTanamanSebelumnya(e.target.value)}
+          >
+            {PREV_CROPS.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Submit */}
+        <button
+          type="submit"
+          id="submit-analysis"
+          className="btn-primary w-full mt-2"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              Menganalisis lahan...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4" />
+              Analisis Lahan &amp; Dapatkan Rekomendasi
+            </>
+          )}
+        </button>
+      </form>
+
+      {/* Kolom Kanan: Peta GIS Sembalun */}
+      <div className="lg:col-span-5 flex flex-col justify-between border-t border-white/10 pt-6 lg:border-t-0 lg:border-l lg:border-white/10 lg:pt-0 lg:pl-6">
+        <div className="mb-3">
+          <h3 className="text-sm font-semibold text-white flex items-center gap-1.5">
+            🗺️ Peta Wilayah Sembalun (GIS)
+          </h3>
+          <p className="text-[10px] text-slate-400 leading-relaxed mt-0.5">
+            Pilih atau klik wilayah di peta untuk mendeteksi ketinggian, kecenderungan jenis tanah, dan ketersediaan air secara otomatis.
+          </p>
+        </div>
+        <div className="flex-1">
+          <SembalunMap onSelectRegion={handleSelectRegion} />
+        </div>
+      </div>
+    </div>
   );
 }
 

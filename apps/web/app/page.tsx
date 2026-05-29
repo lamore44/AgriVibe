@@ -249,7 +249,7 @@ export default function HomePage() {
           <p>
             AgriVibe — Platform Asisten Pertanian Cerdas Sembalun, Lombok Timur
           </p>
-          <p className="mt-1.5">
+          {/* <p className="mt-1.5">
             Dibuat oleh{" "}
             <a
               href="https://github.com/lamore44"
@@ -259,7 +259,7 @@ export default function HomePage() {
             >
               Adhiet
             </a>
-          </p>
+          </p> */}
         </footer>
       </div>
     </main>
