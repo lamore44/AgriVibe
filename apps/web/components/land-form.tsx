@@ -57,7 +57,7 @@ type Props = {
 
 export default function LandForm({ onSubmit, isLoading }: Props) {
   const [jenisTanah, setJenisTanah] = useState("vulkanik");
-  const [luasLahan, setLuasLahan] = useState<number>(5);
+  const [luasLahan, setLuasLahan] = useState<number | "">(5);
   const [sumberAir, setSumberAir] = useState("irigasi");
   const [musim, setMusim] = useState("kemarau");
   const [tanamanSebelumnya, setTanamanSebelumnya] = useState("");
@@ -68,7 +68,7 @@ export default function LandForm({ onSubmit, isLoading }: Props) {
     e.preventDefault();
     onSubmit({
       jenis_tanah: jenisTanah,
-      luas_lahan_are: luasLahan,
+      luas_lahan_are: luasLahan === "" ? 1 : Number(luasLahan),
       sumber_air: sumberAir,
       musim,
       tanaman_sebelumnya: tanamanSebelumnya || null,
@@ -131,7 +131,17 @@ export default function LandForm({ onSubmit, isLoading }: Props) {
               step={1}
               className="form-input"
               value={luasLahan}
-              onChange={(e) => setLuasLahan(Number(e.target.value) || 1)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "") {
+                  setLuasLahan("");
+                } else {
+                  const num = Number(val);
+                  if (!isNaN(num)) {
+                    setLuasLahan(num);
+                  }
+                }
+              }}
             />
           </div>
         </div>
