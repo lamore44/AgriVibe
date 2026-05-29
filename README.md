@@ -47,7 +47,6 @@ OPENWEATHER_API_KEY=your_key
 
 Aplikasi ini dirancang, dikembangkan, dan dikelola secara mandiri oleh:
 * **Adhietya Pratama** - *Inisiator & Lead Developer*
-* Dikembangkan untuk program pengabdian masyarakat (KKN) di Kecamatan Sembalun, Lombok Timur.
 
 ## Lisensi
 
