@@ -6,13 +6,13 @@ use std::env;
 // ── Gemini config ──
 const GEMINI_BASE: &str = "https://generativelanguage.googleapis.com/v1beta/models";
 const GEMINI_MODELS: &[&str] = &[
-    "gemini-2.0-flash-lite",
-    "gemini-2.0-flash",
+    "gemini-3.1-flash-lite",    // Gemini 3.1 Flash-Lite (500 RPD)
+    "gemini-2.0-flash-lite",    // Gemini 2.0 Flash-Lite (20 RPD)
+    "gemini-2.0-flash",         // Gemini 2.0 Flash (20 RPD)
+    "gemini-2.5-flash-lite",    // Gemini 2.5 Flash-Lite (20 RPD)
+    "gemini-2.5-flash",         // Gemini 2.5 Flash (20 RPD)
+    "gemini-3.5-flash",         // Gemini 3.5 Flash (20 RPD)
 ];
-
-// ── Groq config ──
-const GROQ_ENDPOINT: &str = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL: &str = "llama-3.3-70b-versatile";
 
 /// Data yang dikirim untuk generate rekomendasi tanaman.
 #[derive(Debug)]
@@ -60,28 +60,14 @@ pub struct CareGuide {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Entry point — coba Groq dulu, lalu Gemini, lalu fallback statis
+//  Entry point — Hanya Gemini AI, lalu fallback statis
 // ══════════════════════════════════════════════════════════════════════
 
 pub async fn generate_crop_recommendation(input: &GeminiCropInput) -> Result<CropRecommendationOutput, String> {
     let prompt = build_crop_prompt(input);
     let client = Client::new();
 
-    // 1) Coba Groq (jika GROQ_API_KEY ada)
-    if let Ok(groq_key) = env::var("GROQ_API_KEY") {
-        eprintln!("[ai] Trying Groq ({})...", GROQ_MODEL);
-        match call_groq(&client, &groq_key, &prompt).await {
-            Ok(result) => {
-                eprintln!("[ai] ✅ Groq success!");
-                return Ok(result);
-            }
-            Err(err) => {
-                eprintln!("[ai] ❌ Groq failed: {}", err);
-            }
-        }
-    }
-
-    // 2) Coba Gemini (jika GEMINI_API_KEY ada)
+    // Coba Gemini (jika GEMINI_API_KEY ada)
     if let Ok(gemini_key) = env::var("GEMINI_API_KEY") {
         for model in GEMINI_MODELS {
             let endpoint = format!("{}/{}:generateContent?key={}", GEMINI_BASE, model, gemini_key);
@@ -102,68 +88,7 @@ pub async fn generate_crop_recommendation(input: &GeminiCropInput) -> Result<Cro
         }
     }
 
-    Err("Semua AI provider gagal (Groq + Gemini). Pastikan GROQ_API_KEY atau GEMINI_API_KEY valid.".to_string())
-}
-
-// ══════════════════════════════════════════════════════════════════════
-//  Groq API call (OpenAI-compatible)
-// ══════════════════════════════════════════════════════════════════════
-
-async fn call_groq(
-    client: &Client,
-    api_key: &str,
-    prompt: &str,
-) -> Result<CropRecommendationOutput, String> {
-    let response = client
-        .post(GROQ_ENDPOINT)
-        .header("Authorization", format!("Bearer {}", api_key))
-        .header("Content-Type", "application/json")
-        .json(&json!({
-            "model": GROQ_MODEL,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "Kamu adalah asisten pertanian AI. WAJIB jawab dalam format JSON yang valid sesuai struktur yang diminta. Jangan tambahkan teks apapun di luar JSON."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "temperature": 0.5,
-            "max_tokens": 4096,
-            "response_format": { "type": "json_object" }
-        }))
-        .send()
-        .await
-        .map_err(|err| format!("Groq request failed: {}", err))?;
-
-    let status = response.status();
-    let body = response.text().await.map_err(|err| format!("Read body failed: {}", err))?;
-
-    eprintln!("[groq] HTTP status: {}", status);
-    eprintln!("[groq] Response (first 500 chars): {}", &body[..body.len().min(500)]);
-
-    if !status.is_success() {
-        return Err(format!("Groq API returned HTTP {}: {}", status, &body[..body.len().min(500)]));
-    }
-
-    let payload: serde_json::Value =
-        serde_json::from_str(&body).map_err(|err| format!("JSON parse failed: {}", err))?;
-
-    // Extract content dari OpenAI-compatible response
-    let text = payload
-        .get("choices")
-        .and_then(|v| v.get(0))
-        .and_then(|v| v.get("message"))
-        .and_then(|v| v.get("content"))
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| format!("Unexpected Groq response structure: {}", &body[..body.len().min(500)]))?;
-
-    let result: CropRecommendationOutput =
-        serde_json::from_str(text).map_err(|err| format!("Groq JSON parse error: {} — raw: {}", err, text))?;
-
-    Ok(result)
+    Err("Gemini AI gagal memberikan rekomendasi. Pastikan GEMINI_API_KEY valid.".to_string())
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -185,8 +110,8 @@ async fn call_gemini(
                 }
             ],
             "generationConfig": {
-                "temperature": 0.5,
-                "maxOutputTokens": 4096,
+                "temperature": 0.4,
+                "maxOutputTokens": 1500,
                 "responseMimeType": "application/json"
             }
         }))
@@ -279,14 +204,15 @@ DATA CUACA SAAT INI DI SEMBALUN:
 - Kondisi cuaca: {cuaca}
 - Curah hujan: {curah}
 
-INSTRUKSI:
-1. Berikan tepat 3 rekomendasi tanaman terbaik yang paling cocok untuk lahan petani ini.
-2. Prioritaskan tanaman yang umum di Sembalun dan sesuai dengan kondisi lahan.
-3. Pertimbangkan rotasi tanaman (jangan rekomendasikan tanaman yang sama dengan sebelumnya kecuali ada alasan kuat).
-4. Berikan panduan perawatan yang praktis dan mudah dipahami petani.
-5. Berikan tips khusus berdasarkan cuaca saat ini.
-6. Gunakan Bahasa Indonesia yang sederhana dan mudah dipahami.
-7. Jangan gunakan istilah teknis yang rumit.
+INSTRUKSI PENTING:
+1. ANALISIS PARAMETER INPUT: Rekomendasi harus didasarkan sepenuhnya pada data lahan & cuaca di atas. Penjelasan di kolom 'alasan' untuk setiap tanaman WAJIB merujuk dan menghubungkan parameter input berikut secara nyata:
+   - Jenis tanah ({jenis_tanah}) & skor kesesuaian ({skor:.1}/100 - {label}).
+   - Sumber air ({sumber_air}) & Musim ({musim}) & Kondisi cuaca ({cuaca}).
+   - Budget petani ({budget}).
+   - Rotasi terhadap tanaman sebelumnya ({tanaman_sblm}).
+2. OPTIMALISASI TOKEN & SINGKAT: Jawaban di setiap field JSON (terutama 'alasan', 'panduan_perawatan' (tiap langkah), 'tips_cuaca', dan 'tips_umum') harus sangat ringkas, padat, langsung ke inti (to-the-point), dan tidak bertele-tele. Batasi setiap deskripsi teks maksimal 2 kalimat.
+3. Berikan tepat 3 rekomendasi tanaman terbaik yang paling cocok.
+4. Gunakan Bahasa Indonesia yang sederhana dan mudah dipahami oleh petani lokal Sembalun.
 
 WAJIB output JSON dengan struktur:
 {{
@@ -294,20 +220,20 @@ WAJIB output JSON dengan struktur:
     {{
       "nama_tanaman": "...",
       "skor_kesesuaian": 0-100,
-      "alasan": "penjelasan singkat kenapa tanaman ini cocok",
+      "alasan": "penjelasan sangat singkat kenapa tanaman ini cocok dengan merujuk jenis tanah, air/musim, budget, tanaman sebelumnya, dan skor fuzzy",
       "panduan_perawatan": {{
-        "persiapan_lahan": "langkah persiapan lahan",
-        "penanaman": "cara menanam",
-        "pemupukan": "jadwal dan jenis pupuk",
-        "pengairan": "cara pengairan yang tepat",
-        "pengendalian_hama": "cara mencegah dan mengatasi hama",
-        "panen": "tanda siap panen dan cara panen"
+        "persiapan_lahan": "langkah persiapan lahan singkat",
+        "penanaman": "cara menanam singkat",
+        "pemupukan": "pemupukan singkat",
+        "pengairan": "pengairan singkat",
+        "pengendalian_hama": "hama singkat",
+        "panen": "panen singkat"
       }},
       "estimasi_panen": "berapa bulan sampai panen",
-      "tips_cuaca": "tips khusus berdasarkan cuaca saat ini"
+      "tips_cuaca": "tips singkat berdasarkan cuaca saat ini"
     }}
   ],
-  "tips_umum": "saran umum untuk petani berdasarkan keseluruhan kondisi"
+  "tips_umum": "saran umum singkat untuk petani berdasarkan keseluruhan kondisi"
 }}"#,
         jenis_tanah = input.jenis_tanah,
         luas_lahan = input.luas_lahan_are,
@@ -371,9 +297,9 @@ pub async fn generate_chat_response(history: Vec<ChatMessage>) -> Result<String,
     let client = Client::new();
     
     // System instruction untuk konsultasi pertanian Sembalun
-    let system_instruction = "Kamu adalah AgriVibe AI, asisten penyuluh pertanian cerdas untuk petani di Kecamatan Sembalun, Lombok Timur (ketinggian 1.200 mdpl, di bawah kaki Gunung Rinjani, beriklim sejuk, tanah vulkanik sangat subur). Jawablah pertanyaan petani dengan ramah, sopan, praktis, dan bahasa Indonesia yang sederhana. Berikan solusi nyata untuk kendala pertanian seperti penyakit bawang merah, budidaya kentang, stroberi, dll. Batasi jawaban agar ringkas dan langsung ke inti masalah.";
+    let system_instruction = "Kamu adalah AgriVibe AI, asisten penyuluh pertanian cerdas untuk petani di Kecamatan Sembalun, Lombok Timur (ketinggian 1.200 mdpl, di bawah kaki Gunung Rinjani, beriklim sejuk, tanah vulkanik sangat subur). Jawablah pertanyaan petani dengan ramah, sopan, praktis, dan bahasa Indonesia yang sederhana. Berikan solusi nyata untuk kendala pertanian seperti penyakit bawang merah, budidaya kentang, stroberi, dll. Batasi jawaban agar ringkas, langsung ke inti masalah, dan maksimal 3 paragraf pendek untuk menghemat token.";
 
-    // 1) Coba Gemini jika GEMINI_API_KEY ada
+    // Coba Gemini jika GEMINI_API_KEY ada
     if let Ok(gemini_key) = env::var("GEMINI_API_KEY") {
         for model in GEMINI_MODELS {
             let endpoint = format!("{}/{}:generateContent?key={}", GEMINI_BASE, model, gemini_key);
@@ -394,8 +320,8 @@ pub async fn generate_chat_response(history: Vec<ChatMessage>) -> Result<String,
                     "parts": [{ "text": system_instruction }]
                 },
                 "generationConfig": {
-                    "temperature": 0.7,
-                    "maxOutputTokens": 2048
+                    "temperature": 0.6,
+                    "maxOutputTokens": 1500
                 }
             });
             
@@ -431,64 +357,5 @@ pub async fn generate_chat_response(history: Vec<ChatMessage>) -> Result<String,
         }
     }
     
-    // 2) Fallback ke Groq jika GROQ_API_KEY ada
-    if let Ok(groq_key) = env::var("GROQ_API_KEY") {
-        let mut messages = vec![
-            json!({
-                "role": "system",
-                "content": system_instruction
-            })
-        ];
-        
-        for msg in &history {
-            let role = if msg.role == "model" || msg.role == "assistant" { "assistant" } else { "user" };
-            messages.push(json!({
-                "role": role,
-                "content": msg.content
-            }));
-        }
-        
-        let req_body = json!({
-            "model": GROQ_MODEL,
-            "messages": messages,
-            "temperature": 0.7,
-            "max_tokens": 2048
-        });
-        
-        match client.post(GROQ_ENDPOINT)
-            .header("Authorization", format!("Bearer {}", groq_key))
-            .header("Content-Type", "application/json")
-            .json(&req_body)
-            .send()
-            .await 
-        {
-            Ok(resp) => {
-                let status = resp.status();
-                if status.is_success() {
-                    if let Ok(body_text) = resp.text().await {
-                        if let Ok(payload) = serde_json::from_str::<serde_json::Value>(&body_text) {
-                            if let Some(text) = payload
-                                .get("choices")
-                                .and_then(|v| v.get(0))
-                                .and_then(|v| v.get("message"))
-                                .and_then(|v| v.get("content"))
-                                .and_then(|v| v.as_str())
-                            {
-                                return Ok(text.to_string());
-                            }
-                        }
-                    }
-                } else {
-                    if let Ok(err_text) = resp.text().await {
-                        eprintln!("[chat] Groq returned error status: {} - {}", status, err_text);
-                    }
-                }
-            }
-            Err(err) => {
-                eprintln!("[chat] Groq request failed: {}", err);
-            }
-        }
-    }
-    
-    Err("Semua AI provider (Gemini & Groq) gagal memberikan respons.".to_string())
+    Err("Gemini AI gagal memberikan respon chat. Pastikan GEMINI_API_KEY valid.".to_string())
 }

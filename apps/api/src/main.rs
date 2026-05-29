@@ -149,15 +149,22 @@ async fn main() {
     // Load .env — try multiple paths because CWD may be the repo root
     let _ = dotenvy::from_filename("apps/api/.env");
     let _ = dotenvy::dotenv();
-    let limiter = Arc::new(RateLimiter::new(30, Duration::from_secs(60)));
+    let global_limiter = Arc::new(RateLimiter::new(60, Duration::from_secs(60)));
+    let ai_limiter = Arc::new(RateLimiter::new(10, Duration::from_secs(60)));
 
     let app = Router::new()
         .route("/api/health", get(|| async { "AgriVibe Backend aktif — Platform Bantuan Petani Sembalun" }))
         .route("/api/analyze-land", post(handle_analyze_land))
-        .route("/api/recommend-crops", post(handle_recommend_crops))
+        .route(
+            "/api/recommend-crops",
+            post(handle_recommend_crops).layer(middleware::from_fn_with_state(ai_limiter.clone(), rate_limit_middleware)),
+        )
         .route("/api/weather", get(handle_weather))
-        .route("/api/chat", post(handle_chat))
-        .layer(middleware::from_fn_with_state(limiter, rate_limit_middleware));
+        .route(
+            "/api/chat",
+            post(handle_chat).layer(middleware::from_fn_with_state(ai_limiter, rate_limit_middleware)),
+        )
+        .layer(middleware::from_fn_with_state(global_limiter, rate_limit_middleware));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
     println!("🌾 AgriVibe backend listening on {}", addr);

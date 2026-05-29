@@ -9,7 +9,7 @@ AgriVibe adalah platform berbasis AI yang membantu petani di Kecamatan Sembalun,
 ## Fitur Utama
 
 - **Analisis Lahan (Fuzzy Logic Mamdani)**: Mengkalkulasi skor kesesuaian lahan berdasarkan jenis tanah, sumber air, dan musim, lengkap dengan **Visualisasi Detail Keanggotaan Fuzzy & Aturan Inferensi** yang transparan.
-- **Rekomendasi Tanaman AI**: Rekomendasi 3 tanaman terbaik disesuaikan dengan kondisi riil lahan menggunakan Gemini AI / Groq Llama-3.
+- **Rekomendasi Tanaman AI**: Rekomendasi 3 tanaman terbaik disesuaikan dengan kondisi riil lahan menggunakan Gemini AI.
 - **Asisten Chatbot AI**: Konsultasi tanya-jawab interaktif mengenai hama, penyakit, dan teknik budidaya spesifik untuk dataran tinggi Sembalun (1.200 mdpl).
 - **Kalkulator Keuangan & Hasil Panen**: Estimasi modal kerja (bibit, pupuk, tenaga kerja), proyeksi tonase hasil panen, omset, laba bersih, serta ROI tanaman secara interaktif.
 - **Kalender Tanam Interaktif**: Panduan tugas perawatan mingguan (todo list) mulai dari olah tanah hingga panen yang datanya disimpan di `localStorage`.
