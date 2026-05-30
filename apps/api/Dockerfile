@@ -1,5 +1,5 @@
 # Stage 1: Build binary
-FROM rust:1.84-slim as builder
+FROM rust:1.85-slim as builder
 WORKDIR /app
 
 # Install system dependencies needed for compiling
