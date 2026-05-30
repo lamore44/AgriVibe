@@ -37,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`${sans.variable} ${display.variable}`}>
-      <body className="min-h-screen bg-ink-900 text-slate-100 antialiased">
+    <html lang="id" className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
+      <body className="min-h-screen bg-ink-900 text-slate-100 antialiased" suppressHydrationWarning>
         <PwaRegister />
         <Navbar />
         {children}
