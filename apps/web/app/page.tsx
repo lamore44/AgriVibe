@@ -79,6 +79,7 @@ export default function HomePage() {
         },
         suitability_score: json.suitability_score,
         crops: json.recommendations.map((r) => r.nama_tanaman),
+        fullResult: json, // Save entire response for offline access
       };
       saveHistoryEntry(entry);
       setHistory(loadHistory());
@@ -104,6 +105,26 @@ export default function HomePage() {
   const handleClearHistory = useCallback(() => {
     clearHistory();
     setHistory([]);
+  }, []);
+
+  const handleSelectHistoryEntry = useCallback((entry: HistoryEntry) => {
+    if (entry.fullResult) {
+      setResult(entry.fullResult);
+      setSubmittedData({
+        jenis_tanah: entry.input.jenis_tanah,
+        luas_lahan_are: entry.input.luas_lahan_are,
+        sumber_air: entry.input.sumber_air,
+        musim: entry.input.musim,
+        budget: entry.input.budget,
+        tanaman_sebelumnya: null,
+      });
+      // Scroll to results section
+      setTimeout(() => {
+        if (resultRef.current) {
+          resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    }
   }, []);
 
   return (
@@ -241,7 +262,11 @@ export default function HomePage() {
 
         {/* ── History ── */}
         <section className="mt-8">
-          <HistoryPanel entries={history} onClear={handleClearHistory} />
+          <HistoryPanel
+            entries={history}
+            onClear={handleClearHistory}
+            onSelectEntry={handleSelectHistoryEntry}
+          />
         </section>
 
         {/* ── Footer ── */}

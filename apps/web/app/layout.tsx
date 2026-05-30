@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import Navbar from "@/components/navbar";
+import PwaRegister from "@/components/pwa-register";
 
 import "./globals.css";
 
@@ -20,6 +21,13 @@ export const metadata: Metadata = {
     "Platform AI untuk membantu petani Sembalun menentukan tanaman terbaik dan cara perawatan yang tepat berdasarkan kondisi lahan dan cuaca.",
   icons: {
     icon: "/logo.jpg",
+    apple: "/logo.jpg",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "AgriVibe",
   },
 };
 
@@ -31,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${sans.variable} ${display.variable}`}>
       <body className="min-h-screen bg-ink-900 text-slate-100 antialiased">
+        <PwaRegister />
         <Navbar />
         {children}
       </body>
