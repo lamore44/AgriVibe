@@ -166,7 +166,11 @@ async fn main() {
         )
         .layer(middleware::from_fn_with_state(global_limiter, rate_limit_middleware));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
+    let port: u16 = env::var("PORT")
+        .unwrap_or_else(|_| "3001".to_string())
+        .parse()
+        .unwrap_or(3001);
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     println!("🌾 AgriVibe backend listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
