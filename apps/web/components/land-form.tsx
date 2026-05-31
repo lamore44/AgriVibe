@@ -1,6 +1,6 @@
 "use client";
 
-import { Droplets, Leaf, MapPin, Sprout, Wallet } from "lucide-react";
+import { Droplets, Leaf, MapPin, Sprout, Wallet, Lock } from "lucide-react";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 
@@ -53,9 +53,10 @@ const BUDGETS = [
 type Props = {
   onSubmit: (data: LandFormData) => void;
   isLoading: boolean;
+  isIncognito?: boolean;
 };
 
-export default function LandForm({ onSubmit, isLoading }: Props) {
+export default function LandForm({ onSubmit, isLoading, isIncognito = false }: Props) {
   const [jenisTanah, setJenisTanah] = useState("vulkanik");
   const [luasLahan, setLuasLahan] = useState<number | "">(5);
   const [sumberAir, setSumberAir] = useState("irigasi");
@@ -105,6 +106,7 @@ export default function LandForm({ onSubmit, isLoading }: Props) {
               id="jenis-tanah"
               className="form-select"
               value={jenisTanah}
+              disabled={isLoading || isIncognito}
               onChange={(e) => {
                 setJenisTanah(e.target.value);
                 setSelectedRegionName(null); // Reset label wilayah jika diubah manual
@@ -131,6 +133,7 @@ export default function LandForm({ onSubmit, isLoading }: Props) {
               step={1}
               className="form-input"
               value={luasLahan}
+              disabled={isLoading || isIncognito}
               onChange={(e) => {
                 const val = e.target.value;
                 if (val === "") {
@@ -157,6 +160,7 @@ export default function LandForm({ onSubmit, isLoading }: Props) {
               id="sumber-air"
               className="form-select"
               value={sumberAir}
+              disabled={isLoading || isIncognito}
               onChange={(e) => {
                 setSumberAir(e.target.value);
                 setSelectedRegionName(null); // Reset label wilayah jika diubah manual
@@ -179,6 +183,7 @@ export default function LandForm({ onSubmit, isLoading }: Props) {
               id="budget"
               className="form-select"
               value={budget}
+              disabled={isLoading || isIncognito}
               onChange={(e) => setBudget(e.target.value)}
             >
               {BUDGETS.map((b) => (
@@ -199,7 +204,8 @@ export default function LandForm({ onSubmit, isLoading }: Props) {
                 key={m}
                 type="button"
                 id={`musim-${m}`}
-                className={`form-radio flex-1 text-center ${musim === m ? "form-radio-active" : ""}`}
+                disabled={isLoading || isIncognito}
+                className={`form-radio flex-1 text-center ${musim === m ? "form-radio-active" : ""} disabled:opacity-50 disabled:cursor-not-allowed`}
                 onClick={() => setMusim(m)}
               >
                 {m === "hujan" ? "🌧️ Hujan" : "☀️ Kemarau"}
@@ -218,6 +224,7 @@ export default function LandForm({ onSubmit, isLoading }: Props) {
             id="tanaman-sebelumnya"
             className="form-select"
             value={tanamanSebelumnya}
+            disabled={isLoading || isIncognito}
             onChange={(e) => setTanamanSebelumnya(e.target.value)}
           >
             {PREV_CROPS.map((c) => (
@@ -233,12 +240,17 @@ export default function LandForm({ onSubmit, isLoading }: Props) {
           type="submit"
           id="submit-analysis"
           className="btn-primary w-full mt-2"
-          disabled={isLoading}
+          disabled={isLoading || isIncognito}
         >
           {isLoading ? (
             <>
               <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
               Menganalisis lahan...
+            </>
+          ) : isIncognito ? (
+            <>
+              <Lock className="h-4 w-4 text-rose-400" />
+              Analisis AI Terkunci di Mode Incognito
             </>
           ) : (
             <>

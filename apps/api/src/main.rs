@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     env,
-    net::{IpAddr, SocketAddr},
+    net::SocketAddr,
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -113,7 +113,7 @@ struct WeatherResponse {
 struct RateLimiter {
     window: Duration,
     max_requests: usize,
-    requests: Mutex<HashMap<IpAddr, Vec<Instant>>>,
+    requests: Mutex<HashMap<String, Vec<Instant>>>,
 }
 
 impl RateLimiter {
@@ -125,12 +125,12 @@ impl RateLimiter {
         }
     }
 
-    async fn allow(&self, ip: IpAddr) -> bool {
+    async fn allow(&self, key: &str) -> bool {
         let mut requests = self.requests.lock().await;
         let now = Instant::now();
-        let cutoff = now - self.window;
+        let cutoff = now.checked_sub(self.window).unwrap_or(now);
 
-        let entry = requests.entry(ip).or_insert_with(Vec::new);
+        let entry = requests.entry(key.to_string()).or_insert_with(Vec::new);
         entry.retain(|timestamp| *timestamp > cutoff);
 
         if entry.len() >= self.max_requests {
@@ -142,6 +142,11 @@ impl RateLimiter {
     }
 }
 
+struct AiLimiters {
+    rpm: RateLimiter,
+    rpd: RateLimiter,
+}
+
 // ── Main ──
 
 #[tokio::main]
@@ -150,19 +155,22 @@ async fn main() {
     let _ = dotenvy::from_filename("apps/api/.env");
     let _ = dotenvy::dotenv();
     let global_limiter = Arc::new(RateLimiter::new(60, Duration::from_secs(60)));
-    let ai_limiter = Arc::new(RateLimiter::new(10, Duration::from_secs(60)));
+    let ai_limiters = Arc::new(AiLimiters {
+        rpm: RateLimiter::new(3, Duration::from_secs(60)),
+        rpd: RateLimiter::new(7, Duration::from_secs(24 * 3600)),
+    });
 
     let app = Router::new()
         .route("/api/health", get(|| async { "AgriVibe Backend aktif — Platform Bantuan Petani Sembalun" }))
         .route("/api/analyze-land", post(handle_analyze_land))
         .route(
             "/api/recommend-crops",
-            post(handle_recommend_crops).layer(middleware::from_fn_with_state(ai_limiter.clone(), rate_limit_middleware)),
+            post(handle_recommend_crops).layer(middleware::from_fn_with_state(ai_limiters.clone(), ai_rate_limit_middleware)),
         )
         .route("/api/weather", get(handle_weather))
         .route(
             "/api/chat",
-            post(handle_chat).layer(middleware::from_fn_with_state(ai_limiter, rate_limit_middleware)),
+            post(handle_chat).layer(middleware::from_fn_with_state(ai_limiters, ai_rate_limit_middleware)),
         )
         .layer(middleware::from_fn_with_state(global_limiter, rate_limit_middleware));
 
@@ -607,15 +615,96 @@ async fn rate_limit_middleware(
     request: Request<axum::body::Body>,
     next: middleware::Next,
 ) -> Response {
-    let ip = request
-        .extensions()
-        .get::<ConnectInfo<SocketAddr>>()
-        .map(|info| info.0.ip());
-
-    if let Some(ip) = ip {
-        if !limiter.allow(ip).await {
-            return (StatusCode::TOO_MANY_REQUESTS, "Rate limit exceeded").into_response();
+    let mut ip_str = String::new();
+    if let Some(xff) = request.headers().get("x-forwarded-for") {
+        if let Ok(s) = xff.to_str() {
+            if let Some(first_ip) = s.split(',').next() {
+                ip_str = first_ip.trim().to_string();
+            }
         }
+    }
+    if ip_str.is_empty() {
+        if let Some(xri) = request.headers().get("x-real-ip") {
+            if let Ok(s) = xri.to_str() {
+                ip_str = s.trim().to_string();
+            }
+        }
+    }
+    if ip_str.is_empty() {
+        if let Some(info) = request.extensions().get::<ConnectInfo<SocketAddr>>() {
+            ip_str = info.0.ip().to_string();
+        }
+    }
+
+    if !ip_str.is_empty() {
+        if !limiter.allow(&ip_str).await {
+            return (
+                StatusCode::TOO_MANY_REQUESTS,
+                Json(serde_json::json!({
+                    "error": "Batas kecepatan global terlampaui. Silakan coba beberapa saat lagi."
+                })),
+            )
+                .into_response();
+        }
+    }
+
+    next.run(request).await
+}
+
+async fn ai_rate_limit_middleware(
+    State(limiters): State<Arc<AiLimiters>>,
+    request: Request<axum::body::Body>,
+    next: middleware::Next,
+) -> Response {
+    let mut ip_str = String::new();
+    if let Some(xff) = request.headers().get("x-forwarded-for") {
+        if let Ok(s) = xff.to_str() {
+            if let Some(first_ip) = s.split(',').next() {
+                ip_str = first_ip.trim().to_string();
+            }
+        }
+    }
+    if ip_str.is_empty() {
+        if let Some(xri) = request.headers().get("x-real-ip") {
+            if let Ok(s) = xri.to_str() {
+                ip_str = s.trim().to_string();
+            }
+        }
+    }
+    if ip_str.is_empty() {
+        if let Some(info) = request.extensions().get::<ConnectInfo<SocketAddr>>() {
+            ip_str = info.0.ip().to_string();
+        }
+    }
+
+    // Identifikasi pengguna menggunakan User ID atau fallback ke IP address
+    let user_key = request
+        .headers()
+        .get("x-user-id")
+        .and_then(|h| h.to_str().ok())
+        .map(|s| s.to_string())
+        .unwrap_or(ip_str);
+
+    // 1. Periksa batas RPM (3 per menit)
+    if !limiters.rpm.allow(&user_key).await {
+        return (
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(serde_json::json!({
+                "error": "Batas kecepatan (RPM) terlampaui. Anda hanya diperbolehkan mengirim 3 permintaan per menit ke AI."
+            })),
+        )
+            .into_response();
+    }
+
+    // 2. Periksa batas RPD (7 per hari)
+    if !limiters.rpd.allow(&user_key).await {
+        return (
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(serde_json::json!({
+                "error": "Batas harian (RPD) terlampaui. Anda telah mencapai batas 7 kali penggunaan AI per hari."
+            })),
+        )
+            .into_response();
     }
 
     next.run(request).await

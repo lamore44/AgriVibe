@@ -2,6 +2,7 @@
 
 import { Sparkles, Leaf, Mountain } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { checkIsIncognito, getOrCreateUserId } from "@/lib/security";
 
 import LandForm, { type LandFormData } from "@/components/land-form";
 import CropCard, { type CropItemData } from "@/components/crop-card";
@@ -38,14 +39,23 @@ export default function HomePage() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [submittedData, setSubmittedData] = useState<LandFormData | null>(null);
   const [activeCalendarCrop, setActiveCalendarCrop] = useState<string | null>(null);
+  const [isIncognito, setIsIncognito] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
 
-  // Load history on mount
+  // Load history & check incognito on mount
   useEffect(() => {
     setHistory(loadHistory());
+    checkIsIncognito().then((val) => {
+      setIsIncognito(val);
+    });
   }, []);
 
   const handleSubmit = useCallback(async (data: LandFormData) => {
+    if (isIncognito) {
+      setError("Fitur rekomendasi tanaman AI dinonaktifkan dalam mode Incognito.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setResult(null);
@@ -54,13 +64,21 @@ export default function HomePage() {
     try {
       const res = await fetch("/api/recommend", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": getOrCreateUserId(),
+        },
         body: JSON.stringify(data),
       });
 
       const text = await res.text();
       if (!res.ok) {
-        throw new Error(text || "Gagal mendapatkan rekomendasi");
+        try {
+          const parsed = JSON.parse(text);
+          throw new Error(parsed.error || "Gagal mendapatkan rekomendasi");
+        } catch {
+          throw new Error(text || "Gagal mendapatkan rekomendasi");
+        }
       }
 
       const json: RecommendResponse = JSON.parse(text);
@@ -167,6 +185,19 @@ export default function HomePage() {
           <WeatherWidget />
         </section>
 
+        {/* ── Incognito Warning ── */}
+        {isIncognito && (
+          <div className="mt-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-200 animate-fade-in-up">
+            <div className="flex items-start gap-2.5">
+              <span className="text-base">⚠️</span>
+              <div>
+                <strong className="text-white block mb-0.5">Mode Incognito / Penyamaran Terdeteksi</strong>
+                <span>Fitur rekomendasi tanaman AI AgriVibe dinonaktifkan dalam mode Incognito/Pribadi untuk mencegah penyalahgunaan kuota harian. Silakan buka kembali website menggunakan tab biasa.</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── Form ── */}
         <section className="mt-8" id="form-section">
           <div className="glass-card px-5 py-6 sm:px-8 sm:py-8">
@@ -174,7 +205,7 @@ export default function HomePage() {
               <Leaf className="h-5 w-5 text-agri-400" />
               Data Lahan Pertanian
             </h2>
-            <LandForm onSubmit={handleSubmit} isLoading={loading} />
+            <LandForm onSubmit={handleSubmit} isLoading={loading} isIncognito={isIncognito} />
           </div>
         </section>
 

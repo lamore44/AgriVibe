@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MessageSquare, X, Send, Leaf, Sparkles, Loader2 } from "lucide-react";
+import { checkIsIncognito, getOrCreateUserId } from "@/lib/security";
 
 type Message = {
   role: "user" | "assistant";
@@ -26,7 +27,15 @@ export default function Chatbot() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isIncognito, setIsIncognito] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Check incognito on mount
+  useEffect(() => {
+    checkIsIncognito().then((val) => {
+      setIsIncognito(val);
+    });
+  }, []);
 
   // Auto-scroll ke bawah saat ada pesan baru
   const scrollToBottom = () => {
@@ -40,7 +49,7 @@ export default function Chatbot() {
   }, [messages, isOpen]);
 
   const handleSend = async (text: string) => {
-    if (!text.trim() || loading) return;
+    if (!text.trim() || loading || isIncognito) return;
 
     const userMessage: Message = { role: "user", content: text };
     setMessages((prev) => [...prev, userMessage]);
@@ -48,30 +57,41 @@ export default function Chatbot() {
     setLoading(true);
 
     try {
-      // Siapkan history untuk dikirim ke API
-      const historyPayload = [...messages, userMessage].map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
+      // Siapkan history untuk dikirim ke API, abaikan pesan notifikasi limit/error
+      const historyPayload = [...messages, userMessage]
+        .filter((msg) => msg.role !== "assistant" || !msg.content.includes("Batas"))
+        .map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }));
 
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": getOrCreateUserId(),
+        },
         body: JSON.stringify({ history: historyPayload }),
       });
 
+      const responseText = await res.text();
       if (!res.ok) {
-        throw new Error("Gagal mendapatkan respon");
+        try {
+          const parsed = JSON.parse(responseText);
+          throw new Error(parsed.error || "Gagal mendapatkan respon");
+        } catch {
+          throw new Error("Gagal mendapatkan respon");
+        }
       }
 
-      const data = await res.json();
+      const data = JSON.parse(responseText);
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
-    } catch {
+    } catch (err) {
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "Maaf, terjadi gangguan koneksi ke asisten AI. Silakan coba sesaat lagi.",
+          content: err instanceof Error ? err.message : "Maaf, terjadi gangguan koneksi ke asisten AI. Silakan coba sesaat lagi.",
         },
       ]);
     } finally {
@@ -107,35 +127,47 @@ export default function Chatbot() {
 
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-agri-600 text-white rounded-br-none"
-                      : "bg-white/5 border border-white/10 text-slate-200 rounded-bl-none"
-                  }`}
-                >
-                  {msg.content}
-                </div>
+            {isIncognito ? (
+              <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                <Sparkles className="h-8 w-8 text-amber-400 mb-2 animate-pulse" />
+                <p className="text-sm font-semibold text-rose-450">Mode Incognito Terdeteksi</p>
+                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                  Fitur Chatbot AI AgriVibe dinonaktifkan dalam mode Incognito/Pribadi untuk mencegah penyalahgunaan kuota harian. Silakan buka kembali website menggunakan tab biasa.
+                </p>
               </div>
-            ))}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="flex items-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-4 py-2.5 text-xs text-slate-400 rounded-bl-none">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-agri-400" />
-                  <span>AgriVibe sedang mengetik...</span>
-                </div>
-              </div>
+            ) : (
+              <>
+                {messages.map((msg, i) => (
+                  <div
+                    key={i}
+                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed ${
+                        msg.role === "user"
+                          ? "bg-agri-600 text-white rounded-br-none"
+                          : "bg-white/5 border border-white/10 text-slate-200 rounded-bl-none"
+                      }`}
+                    >
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {loading && (
+                  <div className="flex justify-start">
+                    <div className="flex items-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-4 py-2.5 text-xs text-slate-400 rounded-bl-none">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-agri-400" />
+                      <span>AgriVibe sedang mengetik...</span>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Quick Questions */}
-          {messages.length === 1 && !loading && (
+          {messages.length === 1 && !loading && !isIncognito && (
             <div className="px-4 py-2 border-t border-white/5 bg-slate-900/40">
               <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1.5">
                 Pertanyaan Populer:
@@ -166,12 +198,13 @@ export default function Chatbot() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Tanyakan masalah pertanian..."
-              className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:border-agri-400/40 focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-agri-400/20"
+              disabled={isIncognito || loading}
+              placeholder={isIncognito ? "Mode incognito aktif..." : "Tanyakan masalah pertanian..."}
+              className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:border-agri-400/40 focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-agri-400/20 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               type="submit"
-              disabled={!input.trim() || loading}
+              disabled={!input.trim() || loading || isIncognito}
               className="rounded-xl bg-gradient-to-r from-agri-600 to-agri-500 p-2 text-white shadow shadow-agri-600/25 transition-all hover:from-agri-500 hover:to-agri-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
